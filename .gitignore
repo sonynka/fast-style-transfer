@@ -97,3 +97,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+checkpoint
+export
+input
+output
+styles_renamed
