@@ -7,9 +7,11 @@ from PIL import Image
 import base64
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--mode", choices=['export', 'test'])
 parser.add_argument("--checkpoint", default="checkpoint", help="path to checkpoint to export")
 parser.add_argument("--export", default="export", help="path to directory where to export to")
-parser.add_argument("--test_img_path", help="path to test image to generate with the model")
+parser.add_argument("--test_img", help="path to a PNG test image to generate with the model")
+parser.add_argument("--test_img_out", help="path where to save generated test image", default='output/test.png')
 a = parser.parse_args()
 
 
@@ -80,7 +82,7 @@ def export(checkpoint, img_shape):
 
 def test_export():
 
-    with open(a.test_img_path, 'rb') as f:
+    with open(a.test_img, 'rb') as f:
         data = f.read()
 
     data64 = base64.b64encode(data)
@@ -108,7 +110,7 @@ def test_export():
         out = sess.run(out_img)
 
     im = Image.fromarray(out)
-    im.save(os.path.join('output', os.path.basename(a.test_img_path)))
+    im.save(a.test_img_out)
 
 
 def main():
@@ -119,19 +121,20 @@ def main():
     if not os.path.exists(a.export):
         os.makedirs(a.export)
 
-    print("Exporting checkpoint {} to {}".format(a.checkpoint, a.export))
-    # export(a.checkpoint, image_shape)
+    if a.mode == 'export':
+        print("Exporting checkpoint {} to {}".format(a.checkpoint, a.export))
+        export(a.checkpoint, image_shape)
+    elif a.mode == 'test':
+        assert a.test_img is not None
 
-    if a.test_img_path is not None:
-        im = Image.open(a.test_img_path)
+        im = Image.open(a.test_img)
         if [im.width, im.height] != [image_shape[1], image_shape[0]]:
             raise ValueError('Test image must have the same shape as the exported model')
         if im.format != "PNG":
             raise ValueError('Test image must be a .png')
 
-        print("Testing exported checkpoint with {}".format(a.test_img_path))
+        print("Testing exported checkpoint with {}".format(a.test_img))
         test_export()
-
 
 
 if __name__ ==  "__main__":
